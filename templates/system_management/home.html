@@ -22,9 +22,15 @@
     const OBJECT_KEY = "{{ OBJECT_KEY }}";
     const BUCKET_NAME = "{{ BUCKET_NAME }}";
     const BUCKET_REGION = "{{ BUCKET_REGION}}";
+    const CHECK_FILE_EXISTS_URL = "{% url 'check_file_exists' %}"
+    const CSRF_TOKEN = "{{ csrf_token }}"; 
 
     
-</script>
+    </script>
 
-<script src="{% static "js/upload.js" %}"></script>
+
+    <script src="{% static "js/upload.js" %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    
 </html>

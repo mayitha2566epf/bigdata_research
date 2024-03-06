@@ -1,5 +1,8 @@
 from django.shortcuts import render
 from decouple import config
+from system_management.models import *
+from django.http import HttpResponse, JsonResponse
+
 
 # Create your views here.
 def home(request):
@@ -19,3 +22,31 @@ def home(request):
     }
     
     return render(request, "system_management\home.html",context=context)
+
+
+def check_file_exists(request):
+
+    if request.method == "GET":
+
+        file_name = request.POST.get("file_name")
+        file_size = request.POST.get("file_size")
+
+        file_exists = FIleUpload.objects.filter(
+            file_name = file_name,
+            file_size = file_size,
+        ).exists()
+
+        
+        print("*"*10)
+        print(file_exists)
+        print("*"*10)
+
+        request_body = {
+            "data" : {
+                "file_exists" : file_exists
+            }
+        }
+
+        return JsonResponse(request_body,status=200)
+        
+        
