@@ -11,9 +11,15 @@ urlpatterns = [
     ),
 
     path(
-        'get_uploaded_chunks',
-        views.get_uploaded_chunks,
-        name="get_uploaded_chunks"
+        'retrieve_uploaded_chunks',
+        views.retrieve_uploaded_chunks,
+        name="retrieve_uploaded_chunks"
+    ),
+
+    path(
+        'store_file_data',
+        views.store_file_data,
+        name="store_file_data"
     ),
 
 

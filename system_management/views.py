@@ -30,42 +30,100 @@ def check_file_exists(request):
 
     if request.method == "GET":
 
-        file_name = request.POST.get("file_name")
-        file_size = request.POST.get("file_size")
+        file_name = request.GET.get("file_name")
+        file_size = request.GET.get("file_size")
 
-        file_exists = FIleUpload.objects.filter(
+        file_data = FIleUpload.objects.filter(
             file_name = file_name,
             file_size = file_size,
-        ).exists()
+            upload_completed = False,
+        )
+
+        file_exists = file_data.exists()
+
+        if file_exists:
+        
+            upload_id = file_data.first().upload_id
+        
+        else:
+            upload_id = None
 
         request_body = {
             "data" : {
-                "file_exists" : f"{file_exists}"
+                "file_exists" : f"{file_exists}",
+                "upload_id" : upload_id,
             }
         }
 
         return JsonResponse(request_body,status=200)
 
 
-def get_uploaded_chunks(request):
-    if request.method == "GET":
+def retrieve_uploaded_chunks(request):
+    if request.method == "POST":
 
-        upload_id = request.GET.get("upload")
-        key = request.GET.get("key")
-        
-        s3_client = boto3.client(
-            's3'
+        upload_id = request.POST.get("upload_id")
+
+        file_upload_obj = FIleUpload.objects.get(
+            upload_id=upload_id
         )
-        
+
+        print("upload id")
+        print(upload_id)
+
+        object_key = file_upload_obj.object_key
+
+        aws_access_key_id = config("AWS_ACCESS_KEY_ID")
+        aws_secret_access_key = config("AWS_SECRET_ACCESS_KEY")
         BUCKET_NAME = config("BUCKET_NAME")
-        upload_id = upload_id
-        key = key
-        
+
+
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+        )
+
         response = s3_client.list_parts(
             Bucket=BUCKET_NAME,
-            Key=key,
-            UploadId=upload_id
+            Key=object_key,
+            UploadId=upload_id,
         )
+
+        parts = response.get('Parts', [])
+
+        successful_parts = [
+            {
+                "PartNumber":part["PartNumber"],
+                "ETag":part["ETag"],
+            }
+            for part in parts
+        ]
+
+        request_body = {
+            "data" : {
+                "successful_parts" : successful_parts,
+            }
+        }
+
+        return JsonResponse(request_body,status=200)
+
+
+def store_file_data(request):
+    if request.method == "POST":
+
+        file_name = request.POST.get("file_name")
+        file_size = request.POST.get("file_size")
+        upload_id = request.POST.get("upload_id")
+
+        object_key = f"{config("OBJECT_KEY")}/{file_name}"
         
-        print(response)
+        FIleUpload.objects.create(
+            file_name=file_name,
+            upload_id=upload_id,
+            file_size=file_size,
+            object_key=object_key,
+        )
+
+        return JsonResponse({},status=200)
+
 
