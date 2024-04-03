@@ -16,10 +16,11 @@ async function initiate_multipart_upload(bucket_name, object_key, s3) {
 async function uploadParts(file, upload_id, chunk_size) {
 
     var file_size = file.size;
-    var total_chunks = Math.ceil(file_size / chunk_size);
-    var successfulParts = [];
+    var successful_parts = [];
 
     let upload_promises = [];
+
+    var part_number = 1;
 
     for (let start = 0; start < file_size; start += chunk_size) {
 
@@ -48,12 +49,11 @@ async function uploadParts(file, upload_id, chunk_size) {
 
             var results = await waitForUploadPromises(
                 upload_promises=upload_promises,
-                successfulParts=successfulParts
             );
 
             results.forEach(function(result){
                 if (result !== null){
-                    successfulParts.push(result)
+                    successful_parts.push(result)
                 }
 
             });
@@ -64,21 +64,20 @@ async function uploadParts(file, upload_id, chunk_size) {
 
     var results = await waitForUploadPromises(
         upload_promises=upload_promises,
-        successfulParts=successfulParts
     );
 
     results.forEach(function(result){
         if (result !== null){
-            successfulParts.push(result)
+            successful_parts.push(result)
         }
 
     });
 
-    return successfulParts;
+    return successful_parts;
 }
 
 
-async function waitForUploadPromises(uploadPromises, successfulParts) {
+async function waitForUploadPromises(uploadPromises) {
 
     var results = await Promise.all(uploadPromises.map(async (obj) => {
 
@@ -90,8 +89,6 @@ async function waitForUploadPromises(uploadPromises, successfulParts) {
                 ETag: result.ETag,
                 PartNumber: obj.part_number
             };
-
-            successfulParts.push(part);
 
             return part;
 
@@ -105,18 +102,210 @@ async function waitForUploadPromises(uploadPromises, successfulParts) {
 }
 
 
+async function complete_mutlipart_upload(upload_id, successful_parts) {
 
-async function retry_failed_uploads(file_size, successful_parts, upload_id,) {
+    try {
+
+        var completeParams = {
+            Bucket: bucket_name,
+            Key: object_key,
+            UploadId: upload_id,
+            MultipartUpload: {
+                Parts: successful_parts
+            }
+        };
+
+        await s3.completeMultipartUpload(completeParams).promise();
+
+        Swal.fire({
+            title: 'Done',
+            icon: 'success',
+            showCancelButton: true,
+            confirmButtonText: 'Yesss',
+        })
+
+    } catch (error) {
+        console.error("Error completing multipart upload:", error);
+        throw error;
+    }
+}
+
+
+function file_already_exists(file,object_key){
+
+    var file_size = file.size;
+
+    var total_number_of_chunks = Math.ceil(file_size / chunk_size);
+
+    payload = {
+        "file_name" : file.name,
+        "file_size" : file_size
+    }
+
+    $.ajax({
+        type:'GET',
+        url:CHECK_FILE_EXISTS_URL,
+        data:payload,
+        success: async function(response){
+
+            var response_data = response.data;
+
+            var file_exists = response_data.file_exists;
+            var upload_id;
+
+            if( file_exists == "False" ){
+
+                upload_id = await initiate_multipart_upload(
+                    bucket_name=bucket_name,
+                    object_key=object_key,
+                    s3=s3
+                )
+
+                payload.upload_id = upload_id;
+                payload.csrfmiddlewaretoken = CSRF_TOKEN;
+
+                store_file_data(payload);
+
+                var successful_parts = await uploadParts(
+                    file=file,
+                    uploadId=upload_id,
+                    chunk_size=chunk_size
+                );
+
+
+                if (successful_parts.length != total_number_of_chunks){
+
+                    Swal.fire({
+                        title: 'Some files not uploaded, Do you wish to retry?',
+                        icon: 'error',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes',
+                    }).then(async(result) => {
+
+                        if (result.isConfirmed) {
+
+                            retrieve_uploaded_chunks(
+                                upload_id,
+                                file_size,
+                                total_number_of_chunks,
+                                file
+                            )
+                        }
+                    });
+                }
+
+                else{
+
+                    complete_mutlipart_upload(
+                        uploadId=upload_id,
+                        successful_parts=successful_parts
+                    )
+                }
+            }
+
+            else{
+                
+                Swal.fire({
+                    title: 'The file exists and it did not complete upload.',
+                    text: 'Do you wish to retry',
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                }).then(async(result) => {
+
+                    if (result.isConfirmed) {
+
+                        upload_id = response_data.upload_id;
+
+                        retrieve_uploaded_chunks(
+                            upload_id,
+                            file_size,
+                            total_number_of_chunks,
+                            file
+                        )
+                    }
+                });
+            }
+        },
+        error: function () {
+            
+            Swal.fire({
+                title: 'could not check if file exists',
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+            })
+            
+        },
+    });
+    
+}
+
+
+function retrieve_uploaded_chunks(upload_id,file_size,total_number_of_chunks,file){
+
+    payload = {
+        "upload_id" : upload_id,
+        "csrfmiddlewaretoken" : CSRF_TOKEN,
+    }
+
+    $.ajax({
+        type:'POST',
+        url:REIRIEVE_UPLOADED_CHUNKS_URL,
+        data:payload,
+        success: async function(response){
+
+            var successful_parts = response.data.successful_parts
+
+            successful_parts = await retry_failed_uploads(
+                file_size,
+                successful_parts,
+                upload_id,
+                file
+            )
+            
+            if (successful_parts.length != total_number_of_chunks){
+
+                Swal.fire({
+                    title: 'Could not retry upload, please try uploading the file again?',
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                })
+            }
+
+            else{
+
+                complete_mutlipart_upload(
+                    uploadId=upload_id,
+                    successful_parts=successful_parts
+                )
+            }
+            
+        },
+        error: function (response) {
+
+
+            
+        },
+    });
+    
+}
+
+
+async function retry_failed_uploads(file_size, successful_parts, upload_id,file) {
 
     upload_promises = [];
-    part_number = 0;
+    var part_number = 0;
 
+    // start in mb's
+    for (let start = 0; start <= file_size; start += chunk_size) {
 
-    for (let start = 0; start < file_size; start += chunk_size) {
+        part_number += 1;
 
-        part_number +=1
-
+        // skips the chunk if the part-number exists inside the successful parts list
         if (successful_parts.some(item => item.PartNumber === part_number)) {
+            console.log("I skipped this part number",part_number)
             continue;
         }
 
@@ -126,12 +315,16 @@ async function retry_failed_uploads(file_size, successful_parts, upload_id,) {
 
             var failed_chunk_end = Math.min(part_number * chunk_size, file_size)
 
+            console.log("failed chunk start",failed_chunk_start)
+            console.log("failed chunk end",failed_chunk_end)
+            console.log("part number",part_number)
+
             var failed_chunk = file.slice(failed_chunk_start,failed_chunk_end)
 
             var params = {
                 Bucket: bucket_name,
                 Key: object_key,
-                PartNumber: failed_part_number,
+                PartNumber: part_number,
                 UploadId: upload_id,
                 Body: failed_chunk
             };
@@ -154,71 +347,18 @@ async function retry_failed_uploads(file_size, successful_parts, upload_id,) {
 
     }
 
+    console.log(successful_parts)
+
     return successful_parts
 
 }
 
 
-async function complete_mutlipart_upload(upload_id, successfulParts) {
-
-    try {
-
-        var completeParams = {
-            Bucket: bucket_name,
-            Key: object_key,
-            UploadId: upload_id,
-            MultipartUpload: {
-                Parts: successfulParts
-            }
-        };
-
-        await s3.completeMultipartUpload(completeParams).promise();
-
-        console.log("Upload completed successfully.");
-
-    } catch (error) {
-        console.error("Error completing multipart upload:", error);
-        throw error;
-    }
-}
-
-
-function file_already_exists(file){
-
-    payload = {
-        "file_name" : file.name,
-        "file_size" : file.size
-    }
-
+function store_file_data(payload){
     $.ajax({
-        type:'GET',
-        url:CHECK_FILE_EXISTS_URL,
+        type:'POST',
+        url:STORE_FILE_DATA_URL,
         data:payload,
-        success: async function(response){
-
-            var file_exists = response.data.file_exists;
-
-            if( file_exists == "False" ){
-
-                var upload_id = await initiate_multipart_upload(
-                    bucket_name=bucket_name,
-                    object_key=object_key,
-                    s3=s3
-                )
-
-                var successful_parts = await uploadParts(
-                    file=file,
-                    uploadId=upload_id,
-                    chunk_size=chunk_size
-                )
-
-                var total_chunks = Math.ceil(file_size / chunk_size);
-
-            }
-
-            
-        },
-        error: function (response) {},
     });
-    
 }
+

@@ -6,3 +6,4 @@ class FIleUpload(models.Model):
     upload_id = models.TextField()
     file_size = models.CharField(max_length=250)
     upload_completed = models.BooleanField(default=False)
+    object_key = models.TextField(default="")
