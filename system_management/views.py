@@ -3,6 +3,8 @@ from decouple import config
 from system_management.models import *
 from django.http import HttpResponse, JsonResponse
 
+import boto3
+
 
 # Create your views here.
 def home(request):
@@ -36,17 +38,34 @@ def check_file_exists(request):
             file_size = file_size,
         ).exists()
 
-        
-        print("*"*10)
-        print(file_exists)
-        print("*"*10)
-
         request_body = {
             "data" : {
-                "file_exists" : file_exists
+                "file_exists" : f"{file_exists}"
             }
         }
 
         return JsonResponse(request_body,status=200)
+
+
+def get_uploaded_chunks(request):
+    if request.method == "GET":
+
+        upload_id = request.GET.get("upload")
+        key = request.GET.get("key")
         
+        s3_client = boto3.client(
+            's3'
+        )
         
+        BUCKET_NAME = config("BUCKET_NAME")
+        upload_id = upload_id
+        key = key
+        
+        response = s3_client.list_parts(
+            Bucket=BUCKET_NAME,
+            Key=key,
+            UploadId=upload_id
+        )
+        
+        print(response)
+

@@ -23,13 +23,14 @@
     const BUCKET_NAME = "{{ BUCKET_NAME }}";
     const BUCKET_REGION = "{{ BUCKET_REGION}}";
     const CHECK_FILE_EXISTS_URL = "{% url 'check_file_exists' %}"
-    const CSRF_TOKEN = "{{ csrf_token }}"; 
+    const GET_UPLOADED_CHUNKS_URL = "{% url 'get_uploaded_chunks' %}"
+    const CSRF_TOKEN = "{{ csrf_token }}";
 
-    
     </script>
 
 
-    <script src="{% static "js/upload.js" %}"></script>
+<script src="{% static 'js/functions.js' %}"></script>
+    <script src="{% static 'js/upload.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     

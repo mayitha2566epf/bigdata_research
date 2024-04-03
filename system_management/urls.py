@@ -10,5 +10,11 @@ urlpatterns = [
         name="check_file_exists"
     ),
 
+    path(
+        'get_uploaded_chunks',
+        views.get_uploaded_chunks,
+        name="get_uploaded_chunks"
+    ),
+
 
 ]
