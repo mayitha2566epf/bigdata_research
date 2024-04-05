@@ -83,11 +83,23 @@ def retrieve_uploaded_chunks(request):
             aws_secret_access_key=aws_secret_access_key,
         )
 
-        response = s3_client.list_parts(
-            Bucket=BUCKET_NAME,
-            Key=object_key,
-            UploadId=upload_id,
-        )
+        try:
+
+            response = s3_client.list_parts(
+                Bucket=BUCKET_NAME,
+                Key=object_key,
+                UploadId=upload_id,
+            )
+
+        except:
+            file_upload_obj.delete()
+
+            
+            request_body = {
+                "message" : "no parts found"
+            }
+
+            return JsonResponse(request_body,status=400)
 
         parts = response.get('Parts', [])
 
@@ -106,6 +118,7 @@ def retrieve_uploaded_chunks(request):
         }
 
         return JsonResponse(request_body,status=200)
+            
 
 
 def store_file_data(request):
