@@ -16,7 +16,20 @@ var part_number = 1; // Initialize part number
 
 $(document).on('click', '#upload', async function () {
 
+    
+    // print memory size here
+
+    var memoryInfo = window.performance.memory;
+    var usedMemoryInMB = memoryInfo.usedJSHeapSize / (1024 * 1024);
+    console.log("Memory before file upload:");
+    console.log("  Used JS Heap Size: " + usedMemoryInMB.toFixed(2) + " MB");
+
     var file = $('#csv_input').prop('files')[0];
+
+    memoryInfo = window.performance.memory;
+    usedMemoryInMB = memoryInfo.usedJSHeapSize / (1024 * 1024);
+    console.log("Memory after file upload:");
+    console.log("  Used JS Heap Size: " + usedMemoryInMB.toFixed(2) + " MB");
 
     object_key = `${object_key}/${file.name}`
 

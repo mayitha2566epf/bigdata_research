@@ -15,7 +15,18 @@ async function initiate_multipart_upload(bucket_name, object_key, s3) {
 
 async function uploadParts(file, upload_id, chunk_size) {
 
+    memoryInfo = window.performance.memory;
+    usedMemoryInMB = memoryInfo.usedJSHeapSize / (1024 * 1024);
+    console.log("Memory before file size read:");
+    console.log("  Used JS Heap Size: " + usedMemoryInMB.toFixed(2) + " MB");
+    
     var file_size = file.size;
+
+    memoryInfo = window.performance.memory;
+    usedMemoryInMB = memoryInfo.usedJSHeapSize / (1024 * 1024);
+    console.log("Memory after file size read:");
+    console.log("  Used JS Heap Size: " + usedMemoryInMB.toFixed(2) + " MB");
+    
     var successful_parts = [];
 
     let upload_promises = [];
@@ -24,7 +35,7 @@ async function uploadParts(file, upload_id, chunk_size) {
 
     for (let start = 0; start < file_size; start += chunk_size) {
 
-        var end = Math.min(start + chunk_size, file.size);
+        var end = Math.min(start + chunk_size, file_size);
         var chunk_data = file.slice(start, end);
 
         var params = {
@@ -155,52 +166,13 @@ function file_already_exists(file,object_key){
 
             if( file_exists == "False" ){
 
-                upload_id = await initiate_multipart_upload(
-                    bucket_name=bucket_name,
-                    object_key=object_key,
-                    s3=s3
+                start_file_data_upload(
+                    payload,
+                    total_number_of_chunks,
+                    file_size,
+                    file
                 )
 
-                payload.upload_id = upload_id;
-                payload.csrfmiddlewaretoken = CSRF_TOKEN;
-
-                store_file_data(payload);
-
-                var successful_parts = await uploadParts(
-                    file=file,
-                    uploadId=upload_id,
-                    chunk_size=chunk_size
-                );
-
-
-                if (successful_parts.length != total_number_of_chunks){
-
-                    Swal.fire({
-                        title: 'Some files not uploaded, Do you wish to retry?',
-                        icon: 'error',
-                        showCancelButton: true,
-                        confirmButtonText: 'Yes',
-                    }).then(async(result) => {
-
-                        if (result.isConfirmed) {
-
-                            retrieve_uploaded_chunks(
-                                upload_id,
-                                file_size,
-                                total_number_of_chunks,
-                                file
-                            )
-                        }
-                    });
-                }
-
-                else{
-
-                    complete_mutlipart_upload(
-                        uploadId=upload_id,
-                        successful_parts=successful_parts
-                    )
-                }
             }
 
             else{
@@ -285,7 +257,28 @@ function retrieve_uploaded_chunks(upload_id,file_size,total_number_of_chunks,fil
         },
         error: function (response) {
 
+            var message = response.message;
 
+            console.log(response)
+            console.log(message)
+
+            if (message == "no parts found"){
+
+                payload = {
+                    "file_name" : file.name,
+                    "file_size" : file_size
+                }
+                
+                alert("I am uploading the normal way because the upload id doesn't exist")
+                
+                start_file_data_upload(
+                    payload,
+                    total_number_of_chunks,
+                    file_size,
+                    file
+                )
+                
+            }
             
         },
     });
@@ -362,3 +355,54 @@ function store_file_data(payload){
     });
 }
 
+
+async function start_file_data_upload(payload,total_number_of_chunks,file_size,file){
+
+    upload_id = await initiate_multipart_upload(
+        bucket_name=bucket_name,
+        object_key=object_key,
+        s3=s3
+    )
+
+    payload.upload_id = upload_id;
+    payload.csrfmiddlewaretoken = CSRF_TOKEN;
+
+    store_file_data(payload);
+
+    var successful_parts = await uploadParts(
+        file=file,
+        uploadId=upload_id,
+        chunk_size=chunk_size
+    );
+
+
+    if (successful_parts.length != total_number_of_chunks){
+
+        Swal.fire({
+            title: 'Some files not uploaded, Do you wish to retry?',
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonText: 'Yes',
+        }).then(async(result) => {
+
+            if (result.isConfirmed) {
+
+                retrieve_uploaded_chunks(
+                    upload_id,
+                    file_size,
+                    total_number_of_chunks,
+                    file
+                )
+            }
+        });
+    }
+
+    else{
+
+        complete_mutlipart_upload(
+            uploadId=upload_id,
+            successful_parts=successful_parts
+        )
+    }
+    
+}
