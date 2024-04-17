@@ -22,5 +22,10 @@ urlpatterns = [
         name="store_file_data"
     ),
 
+    path(
+        'store_chunk_meta_data',
+        views.store_chunk_meta_data,
+        name="store_chunk_meta_data"
+    ),
 
 ]
