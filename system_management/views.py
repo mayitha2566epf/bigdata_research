@@ -121,7 +121,7 @@ def retrieve_uploaded_chunks(request):
 
         return JsonResponse(request_body,status=200)
 
-
+# @csrf_exempt
 def store_file_data(request):
     if request.method == "POST":
 
@@ -129,7 +129,7 @@ def store_file_data(request):
         file_size = request.POST.get("file_size")
         upload_id = request.POST.get("upload_id")
 
-        object_key = f"{config("OBJECT_KEY")}/{file_name}"
+        object_key = f'{config("OBJECT_KEY")}/{file_name}'
         
         FIleUpload.objects.create(
             file_name=file_name,

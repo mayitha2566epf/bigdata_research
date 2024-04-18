@@ -17,7 +17,7 @@ async function uploadParts(file, upload_id, chunk_size) {
 
     var initial_chunk_size = get_initial_chunk();
 
-    upload_initial_chunk(initail_chunk_size,file);
+    upload_initial_chunk(initial_chunk_size,file);
 
     var file_size = file.size;
     
@@ -450,12 +450,12 @@ function get_bandwidth(network_effective_type){
 }
 
 
-async function upload_initial_chunk(initail_chunk_size,file,upload_id){
+async function upload_initial_chunk(initial_chunk_size,file,upload_id){
 
     var  start = 0;
     var part_number = 1;
 
-    var end = Math.min(0, start + initail_chunk_size);
+    var end = Math.min(0, start + initial_chunk_size);
     var chunk_data = file.slice(start, end);
 
     var params = {
@@ -494,12 +494,13 @@ function store_chunk_meta_data(part_number,start,end,upload_id){
         "start":start,
         "end":end,
         "upload_id":upload_id,
+        "csrfmiddlewaretoken" : CSRF_TOKEN,
     }
 
     
     $.ajax({
         type:'POST',
-        url:STORE_CHUNK_DATA_URL,
+        url:store_chunk_meta_data_url,
         data:payload,
     });
     
