@@ -15,17 +15,11 @@ async function initiate_multipart_upload(bucket_name, object_key, s3) {
 
 async function uploadParts(file, upload_id, chunk_size) {
 
-    memoryInfo = window.performance.memory;
-    usedMemoryInMB = memoryInfo.usedJSHeapSize / (1024 * 1024);
-    console.log("Memory before file size read:");
-    console.log("  Used JS Heap Size: " + usedMemoryInMB.toFixed(2) + " MB");
-    
-    var file_size = file.size;
+    var initial_chunk_size = get_initial_chunk();
 
-    memoryInfo = window.performance.memory;
-    usedMemoryInMB = memoryInfo.usedJSHeapSize / (1024 * 1024);
-    console.log("Memory after file size read:");
-    console.log("  Used JS Heap Size: " + usedMemoryInMB.toFixed(2) + " MB");
+    upload_initial_chunk(initail_chunk_size,file);
+
+    var file_size = file.size;
     
     var successful_parts = [];
 
@@ -43,7 +37,11 @@ async function uploadParts(file, upload_id, chunk_size) {
             Key: object_key,
             PartNumber: part_number,
             UploadId: upload_id,
-            Body: chunk_data
+            Body: chunk_data,
+            Metadata: {
+                "test case": "1"
+            }
+        
         };
 
         var result = s3.uploadPart(params)
@@ -95,6 +93,8 @@ async function waitForUploadPromises(uploadPromises) {
         try {
 
             var result = await obj.promise;
+
+            console.log(result);
 
             var part = {
                 ETag: result.ETag,
@@ -324,6 +324,8 @@ async function retry_failed_uploads(file_size, successful_parts, upload_id,file)
 
             var ETag = await s3.uploadPart(params).promise()
 
+            console.log(ETag)
+
             var part = {
                 ETag: ETag.ETag,
                 PartNumber: part_number
@@ -404,5 +406,101 @@ async function start_file_data_upload(payload,total_number_of_chunks,file_size,f
             successful_parts=successful_parts
         )
     }
+    
+}
+
+
+function get_initial_chunk(){
+
+    var initial_chunk_size;
+
+    if ("connection" in navigator) {
+
+        const network_effective_type = navigator.connection.effectiveType;
+        
+        initial_chunk_size = get_bandwidth(network_effective_type)
+        
+    }
+
+    else {
+        initial_chunk_size = 5000000 // 5 mb
+    }
+
+    return initial_chunk_size;
+    
+}
+
+
+function get_bandwidth(network_effective_type){
+    var chunk_size;
+
+    if(network_effective_type == "5g"){
+        chunk_size = 100000000; // 100mb
+    }
+    
+    else if(network_effective_type == "4g"){
+        chunk_size = 10000000; // 10 mb
+    }
+
+    else{
+        chunk_size = 5000000; //5 mb
+    }
+
+    return chunk_size
+}
+
+
+async function upload_initial_chunk(initail_chunk_size,file,upload_id){
+
+    var  start = 0;
+    var part_number = 1;
+
+    var end = Math.min(0, start + initail_chunk_size);
+    var chunk_data = file.slice(start, end);
+
+    var params = {
+        Bucket: bucket_name,
+        Key: object_key,
+        PartNumber: part_number,
+        UploadId: upload_id,
+        Body: chunk_data,
+    };
+
+    store_chunk_meta_data(
+        part_number,
+        start,
+        end,
+        upload_id
+    );
+
+    // Record the start time
+    // var startTime = Date.now();
+
+    // // Perform the upload
+    // var result = await s3.uploadPart(params);
+
+    // // Record the end time
+    // var endTime = Date.now();
+
+    // // Calculate latency in milliseconds
+    // var latency = endTime - startTime;
+    
+}
+
+
+function store_chunk_meta_data(part_number,start,end,upload_id){
+    var payload = {
+        "part_number":part_number,
+        "start":start,
+        "end":end,
+        "upload_id":upload_id,
+    }
+
+    
+    $.ajax({
+        type:'POST',
+        url:STORE_CHUNK_DATA_URL,
+        data:payload,
+    });
     
 }

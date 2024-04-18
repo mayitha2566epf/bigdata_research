@@ -67,9 +67,6 @@ def retrieve_uploaded_chunks(request):
             upload_id=upload_id
         )
 
-        print("upload id")
-        print(upload_id)
-
         object_key = file_upload_obj.object_key
 
         aws_access_key_id = config("AWS_ACCESS_KEY_ID")
@@ -103,13 +100,18 @@ def retrieve_uploaded_chunks(request):
 
         parts = response.get('Parts', [])
 
-        successful_parts = [
-            {
-                "PartNumber":part["PartNumber"],
-                "ETag":part["ETag"],
-            }
-            for part in parts
-        ]
+        successful_parts = []
+
+        for part in parts:
+
+            part_number = part["PartNumber"]
+
+            successful_parts.append(
+                {
+                    "PartNumber":part_number,
+                    "ETag":part["ETag"],
+                }
+            )
 
         request_body = {
             "data" : {
@@ -118,7 +120,6 @@ def retrieve_uploaded_chunks(request):
         }
 
         return JsonResponse(request_body,status=200)
-            
 
 
 def store_file_data(request):
@@ -136,6 +137,31 @@ def store_file_data(request):
             file_size=file_size,
             object_key=object_key,
         )
+
+        return JsonResponse({},status=200)
+
+
+def store_chunk_meta_data(request):
+    if request.method == "POST":
+
+        part_number = request.POST.get("part_number")
+        start = request.POST.get("start")
+        end = request.POST.get("end")
+        upload_id = request.POST.get("upload_id")
+
+        file_upload_obj = FIleUpload.objects.filter(
+            upload_id = upload_id 
+        )
+
+        if file_upload_obj.exists():
+            file_upload = file_upload_obj.first()
+
+            FileMetaData.objects.create(
+                part_number=part_number,
+                start=start,
+                end=end,
+                file_upload=file_upload
+            )
 
         return JsonResponse({},status=200)
 

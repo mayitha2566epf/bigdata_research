@@ -1,0 +1,155 @@
+{
+    "ResponseMetadata": {
+        "RequestId": "TYKE59KWA1162BFN",
+        "HostId": "bJz4qxaO4kgw+rgJPhv14Ed/mdcgUBVFUrZpHjTsyxblIUainVYEB1wq6RNPCFR/49gTcEG448GV67zRtc6Kcw==",
+        "HTTPStatusCode": 200,
+        "HTTPHeaders": {
+            "x-amz-id-2": "bJz4qxaO4kgw+rgJPhv14Ed/mdcgUBVFUrZpHjTsyxblIUainVYEB1wq6RNPCFR/49gTcEG448GV67zRtc6Kcw==",
+            "x-amz-request-id": "TYKE59KWA1162BFN",
+            "date": "Thu, 11 Apr 2024 14:33:07 GMT",
+            "content-type": "application/xml",
+            "transfer-encoding": "chunked",
+            "server": "AmazonS3"
+        },
+        "RetryAttempts": 1
+    },
+    "Bucket": "researchbigdata",
+    "Key": "multipart_files//custom_1988_2020.csv",
+    "UploadId": ".j3YVtsscbNfAq6Ba.L0uzRO0prZKky5QivEpTeOTQnkPM6Va_yugcj5G6h2tdhE7ZXtwFn1YQ8H5ZLyqBSqanmBdyvymBv4uqjBTnLiMRXZWBMIwxiWK5oDrzhJbRUGp.NkG0n4KUG_.dcIe3z8Mpi944f2ygRn.2MogMQXpNY-",
+    "PartNumberMarker": 0,
+    "NextPartNumberMarker": 11,
+    "MaxParts": 1000,
+    "IsTruncated": False,
+    "Parts": [
+        {
+            "PartNumber": 1,
+            "LastModified": datetime.datetime(2024,
+            4,
+            11,
+            14,
+            26,
+            9, tzinfo=tzutc()),
+            "ETag": ""b289cbcc5ca943cb9af9718695320cd5"",
+            "Size": 5242880
+        },
+        {
+            "PartNumber": 2,
+            "LastModified": datetime.datetime(2024,
+            4,
+            11,
+            14,
+            26,
+            11, tzinfo=tzutc()),
+            "ETag": ""5113849d7fa432b566a386e5e80742e3"",
+            "Size": 5242880
+        },
+        {
+            "PartNumber": 3,
+            "LastModified": datetime.datetime(2024,
+            4,
+            11,
+            14,
+            26,
+            9, tzinfo=tzutc()),
+            "ETag": ""2756eb9e1d8ed937a6c85ac1436cb92b"",
+            "Size": 5242880
+        },
+        {
+            "PartNumber": 4,
+            "LastModified": datetime.datetime(2024,
+            4,
+            11,
+            14,
+            26,
+            9, tzinfo=tzutc()),
+            "ETag": ""780aed530ef9020c1e2f678f19d3f266"",
+            "Size": 5242880
+        },
+        {
+            "PartNumber": 5,
+            "LastModified": datetime.datetime(2024,
+            4,
+            11,
+            14,
+            26,
+            11, tzinfo=tzutc()),
+            "ETag": ""aa405f1160c7319c8d4d81f29188791e"",
+            "Size": 5242880
+        },
+        {
+            "PartNumber": 6,
+            "LastModified": datetime.datetime(2024,
+            4,
+            11,
+            14,
+            26,
+            9, tzinfo=tzutc()),
+            "ETag": ""fc8ec30b2a1ad822d97557c2eb319b57"",
+            "Size": 5242880
+        },
+        {
+            "PartNumber": 7,
+            "LastModified": datetime.datetime(2024,
+            4,
+            11,
+            14,
+            26,
+            19, tzinfo=tzutc()),
+            "ETag": ""5aca1ef18c524148d69bc1c0459a0a87"",
+            "Size": 5242880
+        },
+        {
+            "PartNumber": 8,
+            "LastModified": datetime.datetime(2024,
+            4,
+            11,
+            14,
+            26,
+            21, tzinfo=tzutc()),
+            "ETag": ""5a057c1538c43f16a48d3959062a9449"",
+            "Size": 5242880
+        },
+        {
+            "PartNumber": 9,
+            "LastModified": datetime.datetime(2024,
+            4,
+            11,
+            14,
+            26,
+            19, tzinfo=tzutc()),
+            "ETag": ""b875bb71e16094a1c73a69860f1ab6b5"",
+            "Size": 5242880
+        },
+        {
+            "PartNumber": 10,
+            "LastModified": datetime.datetime(2024,
+            4,
+            11,
+            14,
+            26,
+            21, tzinfo=tzutc()),
+            "ETag": ""f84ff2d0b5826f28dbb5af0fa18a0a3b"",
+            "Size": 5242880
+        },
+        {
+            "PartNumber": 11,
+            "LastModified": datetime.datetime(2024,
+            4,
+            11,
+            14,
+            32,
+            41, tzinfo=tzutc()),
+            "ETag": ""8bc830ed173276e9ca4cce7a2eefbf7f"",
+            "Size": 5242880
+        }
+    ],
+    "Initiator": {
+        "ID": "arn:aws:sts::985480947049:assumed-role/IDFORS3UPLOADS/CognitoIdentityCredentials",
+        "DisplayName": "IDFORS3UPLOADS/CognitoIdentityCredentials"
+    },
+    "Owner": {
+        "DisplayName": "info",
+        "ID": "abccdbc6c7dc212baa4879eb985a42a6349a1c56b6c6037bd7ec98fbb928a0ff"
+    },
+    "StorageClass": "STANDARD"
+}
