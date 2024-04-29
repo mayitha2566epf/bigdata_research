@@ -16,8 +16,8 @@ async function initiate_multipart_upload(bucket_name, object_key, s3) {
 async function uploadParts(file, upload_id, chunk_size) {
 
     var initial_chunk_size = get_initial_chunk();
-
-    upload_initial_chunk(initial_chunk_size,file);
+    console.log("initial chunk size",initial_chunk_size)
+    upload_initial_chunk(initial_chunk_size,file,upload_id);
 
     var file_size = file.size;
     
@@ -445,7 +445,7 @@ function get_bandwidth(network_effective_type){
     else{
         chunk_size = 5000000; //5 mb
     }
-
+    console.log("chunk size",chunk_size)
     return chunk_size
 }
 
@@ -454,9 +454,11 @@ async function upload_initial_chunk(initial_chunk_size,file,upload_id){
 
     var  start = 0;
     var part_number = 1;
-
-    var end = Math.min(0, start + initial_chunk_size);
-    var chunk_data = file.slice(start, end);
+    
+    // var end = Math.min(initial_chunk_size, initial_chunk_size);
+    // console.log("end",end)
+    console.log("Math.max(0, start + initial_chunk_size)",Math.max(0, start + initial_chunk_size))
+    var chunk_data = file.slice(start, initial_chunk_size);
 
     var params = {
         Bucket: bucket_name,
@@ -469,7 +471,7 @@ async function upload_initial_chunk(initial_chunk_size,file,upload_id){
     store_chunk_meta_data(
         part_number,
         start,
-        end,
+        initial_chunk_size, //end
         upload_id
     );
 
@@ -496,7 +498,7 @@ function store_chunk_meta_data(part_number,start,end,upload_id){
         "upload_id":upload_id,
         "csrfmiddlewaretoken" : CSRF_TOKEN,
     }
-
+    console.log('payload',payload)
     
     $.ajax({
         type:'POST',

@@ -152,7 +152,8 @@ def store_chunk_meta_data(request):
         file_upload_obj = FIleUpload.objects.filter(
             upload_id = upload_id 
         )
-
+        print('file_upload_obj',file_upload_obj)
+        print('upload_id',upload_id)
         if file_upload_obj.exists():
             file_upload = file_upload_obj.first()
 
